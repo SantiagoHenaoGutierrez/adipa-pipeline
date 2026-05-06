@@ -91,7 +91,7 @@ exactamente lo más crítico del sistema.
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/TU_USUARIO/adipa-pipeline.git
+git clone https://github.com/SantiagoHenaoGutierrez/adipa-pipeline.git
 cd adipa-pipeline
 
 # 2. Crear el archivo de configuración
@@ -200,6 +200,45 @@ SELECT
 FROM exchange_rates
 GROUP BY currency_to, DATE(window_start AT TIME ZONE 'UTC')
 ORDER BY fecha DESC, currency_to;
+```
+
+---
+
+## Despliegue en VM
+
+El sistema está corriendo en una instancia EC2 de AWS (Ubuntu 22.04, t3.micro, free tier).
+
+**URL pública:** `http://18.217.247.248`
+**Usuario:** `adipa`
+**Contraseña:** `adipa2024`
+
+La UI de Prefect está protegida por un contenedor Nginx (`nginx:alpine`) que actúa como
+reverse proxy con HTTP Basic Auth. El tráfico entra por el puerto 80, Nginx valida las
+credenciales contra un archivo `.htpasswd` y redirige internamente al servidor Prefect
+en el puerto 4200, que no está expuesto públicamente.
+
+```
+Internet → :80 → nginx (basic auth) → prefect-server:4200
+```
+
+Para replicar el despliegue en una VM nueva:
+
+```bash
+# 1. Instalar Docker
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER && newgrp docker
+sudo apt-get install -y docker-compose-plugin
+
+# 2. Agregar swap (recomendado para VMs con 1 GB RAM)
+sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
+sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
+# 3. Clonar y levantar
+git clone https://github.com/SantiagoHenaoGutierrez/adipa-pipeline.git
+cd adipa-pipeline
+cp .env.example .env
+docker compose up -d
 ```
 
 ---
