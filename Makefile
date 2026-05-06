@@ -1,4 +1,4 @@
-.PHONY: up down logs logs-worker shell-db deploy-flows run-light run-heavy reset help
+.PHONY: up down logs logs-worker shell-db deploy-flows run-light run-heavy reset check help
 
 help:
 	@echo "Available targets:"
@@ -11,6 +11,7 @@ help:
 	@echo "  run-light     - Run light pipeline manually"
 	@echo "  run-heavy     - Run heavy pipeline manually"
 	@echo "  reset         - Stop, remove volumes, and restart"
+	@echo "  check         - Verify all services are healthy"
 
 up:
 	docker compose up -d --build
@@ -39,3 +40,22 @@ run-heavy:
 reset:
 	docker compose down -v
 	docker compose up -d --build
+
+check:
+	@echo "==> Container health"
+	@docker compose ps
+	@echo ""
+	@echo "==> Prefect API"
+	@docker compose exec -T prefect-worker python -c \
+	  "import urllib.request; r = urllib.request.urlopen('http://prefect-server:4200/api/health'); print('Prefect:', r.status)"
+	@echo ""
+	@echo "==> Heavy worker"
+	@docker compose exec -T heavy-worker python -c \
+	  "import urllib.request; r = urllib.request.urlopen('http://localhost:8000/health'); print('Heavy worker:', r.status)"
+	@echo ""
+	@echo "==> Database row counts"
+	@docker compose exec -T postgres psql -U $${POSTGRES_USER:-adipa} -d $${POSTGRES_DB:-adipa_db} -c \
+	  "SELECT 'exchange_rates' AS table, COUNT(*) FROM exchange_rates UNION ALL \
+	   SELECT 'courses', COUNT(*) FROM courses UNION ALL \
+	   SELECT 'course_prices', COUNT(*) FROM course_prices UNION ALL \
+	   SELECT 'price_alerts', COUNT(*) FROM price_alerts;"

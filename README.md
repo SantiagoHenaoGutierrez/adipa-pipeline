@@ -210,7 +210,7 @@ El sistema está corriendo en una instancia EC2 de AWS (Ubuntu 22.04, t3.micro, 
 
 **URL pública:** `http://18.217.247.248`
 **Usuario:** `adipa`
-**Contraseña:** `adipa2024`
+**Contraseña:** `adipa123`
 
 La UI de Prefect está protegida por un contenedor Nginx (`nginx:alpine`) que actúa como
 reverse proxy con HTTP Basic Auth. El tráfico entra por el puerto 80, Nginx valida las
