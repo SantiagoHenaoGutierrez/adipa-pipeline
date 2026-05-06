@@ -1,0 +1,23 @@
+# Local development overrides
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+
+  prefect-server:
+    ports:
+      - "4200:4200"
+
+  heavy-worker:
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./heavy-worker:/app
+    environment:
+      ENVIRONMENT: development
+
+  prefect-worker:
+    volumes:
+      - ./orchestrator:/app
+    environment:
+      ENVIRONMENT: development
